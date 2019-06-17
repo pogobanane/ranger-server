@@ -33,7 +33,7 @@ endif()
 ## Subdirectories and source files
 ## ======================================================================================##
 include_directories(src src/utility src/Forest src/Tree)
-file(GLOB_RECURSE SOURCES src/*.cpp)
+file(GLOB_RECURSE SOURCES src/*.cpp src/*.c)
 
 ## ======================================================================================##
 ## Debug and release targets

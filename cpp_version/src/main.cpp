@@ -23,6 +23,10 @@
 #include "ForestProbability.h"
 #include "utility.h"
 
+extern "C" {
+#include "ipc.h"
+}
+
 using namespace ranger;
 
 void run_ranger(const ArgumentHandler& arg_handler, std::ostream& verbose_out) {
@@ -48,6 +52,8 @@ void run_ranger(const ArgumentHandler& arg_handler, std::ostream& verbose_out) {
     forest = make_unique<ForestProbability>();
     break;
   }
+
+  sample_ipc_open(NULL);
 
   // Call Ranger
   forest->initCpp(arg_handler.depvarname, arg_handler.memmode, arg_handler.file, arg_handler.mtry,
