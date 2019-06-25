@@ -32,6 +32,7 @@ using namespace ranger;
 void run_ranger(const ArgumentHandler& arg_handler, std::ostream& verbose_out) {
   verbose_out << "Starting Ranger." << std::endl;
 
+  
   // Create forest object
   std::unique_ptr<Forest> forest { };
   switch (arg_handler.treetype) {
@@ -53,8 +54,6 @@ void run_ranger(const ArgumentHandler& arg_handler, std::ostream& verbose_out) {
     break;
   }
 
-  sample_ipc_open(NULL);
-
   // Call Ranger
   forest->initCpp(arg_handler.depvarname, arg_handler.memmode, arg_handler.file, arg_handler.mtry,
       arg_handler.outprefix, arg_handler.ntree, &verbose_out, arg_handler.seed, arg_handler.nthreads,
@@ -72,8 +71,105 @@ void run_ranger(const ArgumentHandler& arg_handler, std::ostream& verbose_out) {
   verbose_out << "Finished Ranger." << std::endl;
 }
 
-int main(int argc, char **argv) {
+std::string ranger_predict() {
+  std::ostream& verbose_out = std::cout;
+  verbose_out << "Starting Ranger." << std::endl;
+  
+  // ranger parameters
+  TreeType treetype = TREE_CLASSIFICATION;
+  bool probability = false;
+  std::string depvarname = "";
+  MemoryMode memmode = MEM_DOUBLE;
+  std::string file = "data2.dat";
+  uint mtry = 0;
+  std::string outprefix = "data2-ipced";
+  uint ntree = DEFAULT_NUM_TREE;
+  uint seed = 0;
+  uint nthreads = 1; // DEFAULT_NUM_THREADS;
+  std::string predict = "data2.forest"; 
+  ImportanceMode impmeasure = DEFAULT_IMPORTANCE_MODE;
+  uint targetpartitionsize = 0;
+  std::string splitweights = "";
+  std::vector<std::string> alwayssplitvars;
+  std::string statusvarname = "";
+  bool replace = true;
+  std::vector<std::string> catvars;
+  bool savemem = false;
+  SplitRule splitrule = DEFAULT_SPLITRULE;
+  std::string caseweights = "";
+  bool predall = false;
+  double fraction = 1;
+  double alpha = DEFAULT_ALPHA;
+  double minprop = DEFAULT_MINPROP;
+  bool holdout = false;
+  PredictionType predictiontype = DEFAULT_PREDICTIONTYPE;
+  uint randomsplits = DEFAULT_NUM_RANDOM_SPLITS;
+  uint maxdepth = DEFAULT_MAXDEPTH;
+  bool skipoob = false;
+  bool write = false;
 
+  // Create forest object
+  std::unique_ptr<Forest> forest { };
+  switch (treetype) {
+  case TREE_CLASSIFICATION:
+    if (probability) {
+      forest = make_unique<ForestProbability>();
+    } else {
+      forest = make_unique<ForestClassification>();
+    }
+    break;
+  case TREE_REGRESSION:
+    forest = make_unique<ForestRegression>();
+    break;
+  case TREE_SURVIVAL:
+    forest = make_unique<ForestSurvival>();
+    break;
+  case TREE_PROBABILITY:
+    forest = make_unique<ForestProbability>();
+    break;
+  }
+
+  // Call Ranger
+  forest->initCpp(depvarname, memmode, file, mtry,
+      outprefix, ntree, &verbose_out, seed, nthreads,
+      predict, impmeasure, targetpartitionsize, splitweights,
+      alwayssplitvars, statusvarname, replace, catvars,
+      savemem, splitrule, caseweights, predall, fraction,
+      alpha, minprop, holdout, predictiontype,
+      randomsplits, maxdepth);
+
+  forest->run(true, !skipoob);
+  if (write) {
+    forest->saveToFile();
+  }
+  forest->writeOutput();
+  verbose_out << "Finished Ranger." << std::endl;
+
+  return "return str";
+}
+
+int main(int argc, char **argv) {
+  sample_ipc_main_t ipc;
+  sample_ipc_open(&ipc); // TODO error check
+
+  std::string prediction;
+  
+  try {
+    prediction = ranger_predict();
+  } catch (std::runtime_error& e) {
+    std::cerr << "Error: " << e.what() << " Ranger will EXIT now." << std::endl;
+    sample_ipc_close(&ipc);
+    return -1;
+  }
+  
+  sample_ipc_close(&ipc); // TODO error check
+  return 0;
+}
+
+int main_old(int argc, char **argv) {
+
+  sample_ipc_main_t ipc;
+  sample_ipc_open(&ipc);
   try {
     // Handle command line arguments
     ArgumentHandler arg_handler(argc, argv);
@@ -93,8 +189,10 @@ int main(int argc, char **argv) {
     }
   } catch (std::exception& e) {
     std::cerr << "Error: " << e.what() << " Ranger will EXIT now." << std::endl;
+    sample_ipc_close(&ipc);
     return -1;
   }
 
+  sample_ipc_close(&ipc);
   return 0;
 }
