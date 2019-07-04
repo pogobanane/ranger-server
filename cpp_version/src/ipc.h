@@ -20,4 +20,8 @@ extern int sample_ipc_open(sample_ipc_main_t *self);
 
 int sample_ipc_close(sample_ipc_main_t *self);
 
+uint32_t sample_ipc_communicate_to_server(sample_ipc_main_t *self);
+
+void sample_ipc_communicate_to_client(sample_ipc_main_t *self);
+
 #endif /* __included_ipc_h__ */
