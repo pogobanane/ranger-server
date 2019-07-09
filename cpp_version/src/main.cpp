@@ -23,9 +23,7 @@
 #include "ForestProbability.h"
 #include "utility.h"
 
-extern "C" {
 #include "ipc.h"
-}
 
 using namespace ranger;
 
@@ -151,6 +149,7 @@ std::string ranger_predict() {
 int main(int argc, char **argv) {
   sample_ipc_main_t ipc;
   sample_ipc_open(&ipc); // TODO error check
+  sample_ipc_communicate_to_client(&ipc);
 
   std::string prediction;
   

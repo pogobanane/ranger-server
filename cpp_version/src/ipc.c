@@ -1,15 +1,22 @@
 /*
  * TODO license smth
  */
+#include <stdatomic.h>
 #include <fcntl.h>
 #include <ipc.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <stdatomic.h>
 #include <string.h>
 #include <sys/mman.h>
 
 // TODO remove int's
+
+struct sample_ipc_mem_t {
+	atomic_char guard;
+	char msg[15];
+};
+
+void mmap_notify_client(atomic_char *guard);
 
 int make_space(int file_descriptor, int bytes) 
 {
@@ -68,6 +75,10 @@ int sample_ipc_open(sample_ipc_main_t *self)
 	self->memory = file_memory;
 	self->size = mmap_size;
 
+	// initialize
+	atomic_char *guard = &(self->memory->guard);
+	mmap_notify_client(guard); // #c
+
 	// we don't need fd anymore
 	if (close(fd) < 0) {
 		return -4; // error closing file
@@ -118,17 +129,17 @@ void mmap_notify_server(atomic_char *guard)
  */ 
 uint32_t sample_ipc_communicate_to_server(sample_ipc_main_t *self)
 {
-	atomic_char *guard = (atomic_char *)self->memory;
+	atomic_char *guard = &(self->memory->guard);
 	uint32_t response = 0;
 
 	mmap_wait_for_server(guard); // #c
 	char msg[15];
 	strcpy(msg, "msg frm clnt");
-	memset(self->memory, 0, self->size);
-	memcpy(self->memory, msg, 15);
+	memset(&(self->memory->msg), 0, self->size);
+	memcpy(&(self->memory->msg), msg, 15);
 	mmap_notify_server(guard); // #s
 	mmap_wait_for_server(guard); // #c
-	memcpy(&response, self->memory, sizeof(response));
+	memcpy(&response, &(self->memory->msg), sizeof(response));
 	return response;
 }
 
@@ -137,15 +148,16 @@ uint32_t sample_ipc_communicate_to_server(sample_ipc_main_t *self)
  */ 
 void sample_ipc_communicate_to_client(sample_ipc_main_t *self)
 {
-	atomic_char *guard = (atomic_char *)self->memory;
+	atomic_char *guard = &(self->memory->guard);
 	uint32_t response = 7;
 
 	mmap_wait_for_client(guard); // #s
 	// TODO read data
-	memset(self->memory, 0, self->size);
-	memcpy(self->memory, &response, sizeof(response));
+	memset(&(self->memory->msg), 0, self->size);
+	memcpy(&(self->memory->msg), &response, sizeof(response));
 	mmap_notify_client(guard); // #c
 	// mmap_wait_for_server(guard);
 	// memcpy(&response, self->memory, sizeof(response));
 	// return response;
 }
+
