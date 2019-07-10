@@ -150,12 +150,14 @@ std::string ranger_predict() {
 int main(int argc, char **argv) {
   sample_ipc_main_t ipc;
   sample_ipc_open(&ipc); // TODO error check
+  char request[SAMPLE_IPC_MEM_REQUEST_SIZE];
   for (int i = 0; i < 10; i++) {
-    sample_ipc_communicate_to_client(&ipc, i);
-    std::cout << std::unitbuf << ".";
+    sample_ipc_communicate_to_client(&ipc, i, request);
+    std::cout << request << "\n";
+    //std::cout << std::unitbuf << ".";
     usleep(2000000);
   }
-  std::cout << std::nounitbuf;
+  //std::cout << std::nounitbuf;
 
   std::string prediction;
   

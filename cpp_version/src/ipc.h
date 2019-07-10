@@ -10,6 +10,7 @@ extern "C" {
 
 #include <stdint.h>
 
+#define SAMPLE_IPC_MEM_REQUEST_SIZE 15
 struct sample_ipc_mem_t;
 
 typedef struct {
@@ -26,9 +27,9 @@ extern int sample_ipc_open(sample_ipc_main_t *self);
 
 int sample_ipc_close(sample_ipc_main_t *self);
 
-uint32_t sample_ipc_communicate_to_server(sample_ipc_main_t *self);
+uint32_t sample_ipc_communicate_to_server(sample_ipc_main_t *self, char* buf);
 
-void sample_ipc_communicate_to_client(sample_ipc_main_t *self, uint32_t response);
+void sample_ipc_communicate_to_client(sample_ipc_main_t *self, uint32_t response, char* request);
 
 #ifdef __cplusplus
 }
