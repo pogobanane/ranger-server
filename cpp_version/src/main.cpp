@@ -15,6 +15,8 @@
 #include <string>
 #include <memory>
 #include <unistd.h>
+#include <stdio.h>
+#include <inttypes.h>
 
 #include "globals.h"
 #include "ArgumentHandler.h"
@@ -150,10 +152,11 @@ std::string ranger_predict() {
 int main(int argc, char **argv) {
   sample_ipc_main_t ipc;
   sample_ipc_open(&ipc); // TODO error check
-  char request[SAMPLE_IPC_MEM_REQUEST_SIZE];
+  sample_ipc_for_server_t request;
+  request.n_rx_packets = 0;
   for (int i = 0; i < 10; i++) {
-    sample_ipc_communicate_to_client(&ipc, i, request);
-    std::cout << request << "\n";
+    sample_ipc_communicate_to_client(&ipc, i, &request);
+    printf("%" PRIu32 "\n", request.n_rx_packets);
     //std::cout << std::unitbuf << ".";
     usleep(2000000);
   }
