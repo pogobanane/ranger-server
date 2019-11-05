@@ -27,6 +27,7 @@
 #include "utility.h"
 
 #include "ipc.h"
+#include "ringbuf.h"
 
 using namespace ranger;
 
@@ -147,6 +148,16 @@ std::string ranger_predict() {
   verbose_out << "Finished Ranger." << std::endl;
 
   return "return str";
+}
+
+/*
+* remember to adjust the SAMPLE_RINGBUF_SIZE to 8 and SAMPLE_RINGBUF_MAP to 7 before using this test
+*/
+#include "ringbuf-test.c"
+int tests() {
+  int ret = ringbuf_test();
+  std::cout << std::unitbuf << ret << "\n";
+  return ret;
 }
 
 int main(int argc, char **argv) {
