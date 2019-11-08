@@ -48,6 +48,8 @@ void sample_ringbuf_push(sample_ringbuffer_t *rbuf, uint32_t data);
 
 uint8_t sample_ringbuf_pop(sample_ringbuffer_t *rbuf, uint32_t *dst);
 
+uint32_t sample_ringbuf_count(sample_ringbuffer_t *rbuf);
+
 void sample_ringbuf_print(sample_ringbuffer_t *rbuf);
 
 #ifdef __cplusplus

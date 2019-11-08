@@ -59,6 +59,16 @@ uint8_t sample_ringbuf_pop(sample_ringbuffer_t *rbuf, uint32_t *dst)
 	return 1;
 }
 
+// number of items in the ringbuffer
+uint32_t sample_ringbuf_count(sample_ringbuffer_t *rbuf) {
+	if (rbuf->headIndex == rbuf->tailIndex)
+		return 0;
+	if (rbuf->headIndex > rbuf->tailIndex)
+		return rbuf->headIndex - rbuf->tailIndex;
+	if (rbuf->headIndex < rbuf->tailIndex)
+		return rbuf->headIndex - 1 + (SAMPLE_RINGBUF_SIZE - rbuf->tailIndex + 1);
+}
+
 #include <stdio.h>
 #include <inttypes.h>
 void sample_ringbuf_print(sample_ringbuffer_t *rbuf)

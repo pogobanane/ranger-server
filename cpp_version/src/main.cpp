@@ -173,10 +173,11 @@ int main(int argc, char **argv) {
   std::unique_ptr<sample_ringbuffer_t> request = make_unique<sample_ringbuffer_t>();
   
   for (int i = 0; i < n; i++) {
-    std::cout << std::unitbuf << "exporting sample\n";
+    std::cout << std::unitbuf << "exporting sample: ";
     //sample_ringbuffer_t *bucket = (sample_ringbuffer_t *) malloc(sizeof(sample_ringbuffer_t));
     sample_ipc_communicate_to_client(&ipc, i, request.get());
     requests.push_back(*request);
+    std::cout << std::unitbuf << sample_ringbuf_count(request.get()) << " / " << SAMPLE_RINGBUF_SIZE << "\n";
     //std::cout << std::unitbuf << ".";
     usleep(3000000); // 3s
   }
