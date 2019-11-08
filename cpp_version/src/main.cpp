@@ -183,15 +183,21 @@ int main(int argc, char **argv) {
   std::cout << std::unitbuf << "Recording stopped.\n";
   //std::cout << std::nounitbuf;
 
-  std::cout << "List n_rx_packets starting with the oldest one:\n";
+  // List n_rx_packets starting with the oldest one
+  const char *filepath = "badge_sizes.csv";
+  std::ofstream outfile;
+  outfile.open(filepath);
   uint32_t n_rx_packets = 0;
   for (sample_ringbuffer_t &rbuf : requests) {
     for (uint32_t i = 0; i < rbuf.sizeOfBuffer; i++) {
-      sample_ringbuf_pop(&rbuf, &n_rx_packets);
-      std::cout << std::unitbuf << n_rx_packets;
-      //printf("%" PRIu32 "\n", request.n_rx_packets);
+      if (!sample_ringbuf_pop(&rbuf, &n_rx_packets)) {
+        break;
+      }
+      outfile << n_rx_packets << "\n";
     }
   }
+  outfile.close();
+  std::cout << "Wrote data to " << filepath << "\n";
 
   std::string prediction;
   
