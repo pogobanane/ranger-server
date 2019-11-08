@@ -27,7 +27,6 @@
 #include "utility.h"
 
 #include "ipc.h"
-#include "ringbuf.h"
 
 using namespace ranger;
 
@@ -163,15 +162,36 @@ int tests() {
 int main(int argc, char **argv) {
   sample_ipc_main_t ipc;
   sample_ipc_open(&ipc); // TODO error check
-  sample_ipc_for_server_t request;
-  request.n_rx_packets = 0;
-  for (int i = 0; i < 10; i++) {
+  int n = 10;
+
+  //sample_ringbuffer_t *requests = malloc(sizeof(sample_ringbuffer_t) * n);
+  //if (requests = NULL) {
+  //  std::cout << std::unitbuf << "out of memory?\n"
+  //  return -1;
+  //}
+  std::vector<sample_ringbuffer_t> requests;
+  sample_ringbuffer_t request;
+  
+  for (int i = 0; i < n; i++) {
+    std::cout << std::unitbuf << "exporting sample\n";
+    //sample_ringbuffer_t *bucket = (sample_ringbuffer_t *) malloc(sizeof(sample_ringbuffer_t));
     sample_ipc_communicate_to_client(&ipc, i, &request);
-    printf("%" PRIu32 "\n", request.n_rx_packets);
+    requests.push_back(request);
     //std::cout << std::unitbuf << ".";
-    usleep(2000000);
+    usleep(3000000); // 3s
   }
+  std::cout << std::unitbuf << "Recording stopped.\n";
   //std::cout << std::nounitbuf;
+
+  std::cout << "List n_rx_packets starting with the oldest one:\n";
+  uint32_t n_rx_packets = 0;
+  for (sample_ringbuffer_t rbuf : requests) {
+    for (uint32_t i = 0; i < rbuf.sizeOfBuffer; i++) {
+      sample_ringbuf_pop(&rbuf, &n_rx_packets);
+      std::cout << std::unitbuf << n_rx_packets;
+      //printf("%" PRIu32 "\n", request.n_rx_packets);
+    }
+  }
 
   std::string prediction;
   

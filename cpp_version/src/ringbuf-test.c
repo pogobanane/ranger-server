@@ -1,5 +1,6 @@
 int ringbuf_test() {
-  sample_ringbuffer_t* rbuf = sample_ringbuf_init();
+  sample_ringbuffer_t *rbuf = (sample_ringbuffer_t*) malloc(sizeof(sample_ringbuffer_t));
+  sample_ringbuf_init(rbuf);
   uint32_t dst = 0;
   uint8_t retcode = sample_ringbuf_pop(rbuf, &dst);
   if (retcode != 0)

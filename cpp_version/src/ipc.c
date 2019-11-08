@@ -1,6 +1,11 @@
 /*
  * TODO license smth
  */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdatomic.h>
 #include <fcntl.h>
 #include <ipc.h>
@@ -14,7 +19,7 @@
 struct sample_ipc_mem_t {
 	atomic_char guard;
 	uint32_t response;
-	sample_ipc_for_server_t request[SAMPLE_IPC_MEM_REQUEST_SIZE];
+	sample_ringbuffer_t request;
 };
 
 void mmap_release(atomic_char *guard);
@@ -52,6 +57,8 @@ int get_file_descriptor(int bytes)
 }
 
 /*
+ * creates sample_ipc_mem_t as shared memory and stores it's 
+ * information and a pointer to it in self
  * return < 0 on error
  */
 int sample_ipc_open(sample_ipc_main_t *self) 
@@ -78,6 +85,7 @@ int sample_ipc_open(sample_ipc_main_t *self)
 	self->size = mmap_size;
 
 	// initialize
+	sample_ringbuf_init(&self->memory->request);
 	atomic_char *guard = &(self->memory->guard);
 	mmap_release(guard); // #c
 
@@ -146,37 +154,43 @@ void mmap_release(atomic_char *guard)
  * client: writes buf to server and returns received answer
  * TODO: bufs size is not checked
  */ 
-uint32_t sample_ipc_communicate_to_server(sample_ipc_main_t *self, sample_ipc_for_server_t* buf)
+uint32_t sample_ipc_communicate_to_server(sample_ipc_main_t *self, uint32_t n_rx_packets)
 {
 	atomic_char *guard = &(self->memory->guard);
 	uint32_t response = 0;
 
 	mmap_client_wait(guard);
 	mmap_client_take(guard); // c
-	// not needed anymore since we don't use strings anymore
-	//char msg[SAMPLE_IPC_MEM_REQUEST_SIZE];
-	//strncpy(msg, buf, sizeof(msg));
-	//memset(&(self->memory->request), 0, SAMPLE_IPC_MEM_REQUEST_SIZE);
-	memcpy(&(self->memory->request), buf, sizeof(sample_ipc_for_server_t));
+	sample_ringbuf_push(&(self->memory->request), n_rx_packets);
 	memcpy(&response, &(self->memory->response), sizeof(response));
 	mmap_release(guard); // n
 	return response;
 }
 
 /*
- * server: reads data from client, writes it to request and sends response
+ * server: reads and resets the filled ringbuffer from client, copies
+ * it to request and sends response
  */ 
-void sample_ipc_communicate_to_client(sample_ipc_main_t *self, uint32_t response, sample_ipc_for_server_t* request)
+void sample_ipc_communicate_to_client(sample_ipc_main_t *self, uint32_t response, sample_ringbuffer_t* request)
 {
 	atomic_char *guard = &(self->memory->guard);
 
 	mmap_server_wait(guard); 
 	mmap_server_take(guard); // s
-	memcpy(request, &(self->memory->request), sizeof(sample_ipc_for_server_t));
-	memcpy(&(self->memory->response), &response, sizeof(uint32_t));
+	
+	// export ringbuffer to non-ipc memory to parse it there without blocking 
+	// the shared memory
+	memcpy(request, &(self->memory->request), sizeof(sample_ringbuffer_t));
+	// empty the shared memory ringbuffer
+	sample_ringbuf_reset(&(self->memory->request));
+
+	memcpy(&(self->memory->response), &response, sizeof(response));
 	mmap_release(guard); // n
 	// mmap_wait_for_server(guard);
 	// memcpy(&response, self->memory, sizeof(response));
 	// return response;
 }
 
+#ifdef __cplusplus
+}
+#endif
