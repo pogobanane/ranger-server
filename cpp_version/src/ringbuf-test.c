@@ -1,3 +1,13 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <stdio.h>
+#include <string.h>
+#include <inttypes.h>
+
+#include "ringbuf.h"
+
 int ringbuf_test() {
   sample_ringbuffer_t *rbuf = (sample_ringbuffer_t*) malloc(sizeof(sample_ringbuffer_t));
   sample_ringbuf_init(rbuf);
@@ -34,7 +44,7 @@ int ringbuf_test() {
   sample_ringbuf_print(rbuf);
   printf("pop a lot\n");
   retcode = sample_ringbuf_pop(rbuf, &dst);
-  std::cout << std::unitbuf << "got: " << dst << "\n";
+  printf("got: %" PRIu32 "\n", dst);
   if (retcode != 1 || dst != 1340)
     return 6;
   retcode = sample_ringbuf_pop(rbuf, &dst);
@@ -62,3 +72,7 @@ int ringbuf_test() {
 
   return 0;
 }
+
+#ifdef __cplusplus
+}
+#endif

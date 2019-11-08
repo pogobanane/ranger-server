@@ -152,7 +152,7 @@ std::string ranger_predict() {
 /*
 * remember to adjust the SAMPLE_RINGBUF_SIZE to 8 and SAMPLE_RINGBUF_MAP to 7 before using this test
 */
-#include "ringbuf-test.c"
+#include "ringbuf-test.h"
 int tests() {
   int ret = ringbuf_test();
   std::cout << std::unitbuf << ret << "\n";

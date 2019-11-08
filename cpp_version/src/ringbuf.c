@@ -1,6 +1,10 @@
 /*
  * TODO license smth
  */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <fcntl.h>
 #include <ringbuf.h>
 #include <sys/types.h>
@@ -88,3 +92,7 @@ uint32_t sample_ringbuf_extract_all(sample_ringbuffer_t *rbuf, uint32_t *n_rx_pa
 	}
 	//uint32_t stop_idx = min(start_idx, )
 }
+
+#ifdef __cplusplus
+}
+#endif
