@@ -170,13 +170,13 @@ int main(int argc, char **argv) {
   //  return -1;
   //}
   std::vector<sample_ringbuffer_t> requests;
-  sample_ringbuffer_t request;
+  std::unique_ptr<sample_ringbuffer_t> request = make_unique<sample_ringbuffer_t>();
   
   for (int i = 0; i < n; i++) {
     std::cout << std::unitbuf << "exporting sample\n";
     //sample_ringbuffer_t *bucket = (sample_ringbuffer_t *) malloc(sizeof(sample_ringbuffer_t));
-    sample_ipc_communicate_to_client(&ipc, i, &request);
-    requests.push_back(request);
+    sample_ipc_communicate_to_client(&ipc, i, request.get());
+    requests.push_back(*request);
     //std::cout << std::unitbuf << ".";
     usleep(3000000); // 3s
   }
@@ -185,7 +185,7 @@ int main(int argc, char **argv) {
 
   std::cout << "List n_rx_packets starting with the oldest one:\n";
   uint32_t n_rx_packets = 0;
-  for (sample_ringbuffer_t rbuf : requests) {
+  for (sample_ringbuffer_t &rbuf : requests) {
     for (uint32_t i = 0; i < rbuf.sizeOfBuffer; i++) {
       sample_ringbuf_pop(&rbuf, &n_rx_packets);
       std::cout << std::unitbuf << n_rx_packets;
