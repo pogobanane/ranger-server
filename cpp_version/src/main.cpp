@@ -4,8 +4,7 @@
  Copyright (c) [2014-2018] [Marvin N. Wright]
 
  This software may be modified and distributed under the terms of the MIT license.
-
- Please note that the C++ core of ranger is distributed under MIT license and the
+Please note that the C++ core of ranger is distributed under MIT license and the
  R package "ranger" under GPL3 license.
  #-------------------------------------------------------------------------------*/
 
@@ -13,6 +12,7 @@
 #include <fstream>
 #include <stdexcept>
 #include <string>
+#include <string.h>
 #include <memory>
 #include <unistd.h>
 #include <stdio.h>
@@ -149,20 +149,13 @@ std::string ranger_predict() {
   return "return str";
 }
 
-/*
-* remember to adjust the SAMPLE_RINGBUF_SIZE to 8 and SAMPLE_RINGBUF_MAP to 7 before using this test
-*/
-#include "ringbuf-test.h"
-int tests() {
-  int ret = ringbuf_test();
-  std::cout << std::unitbuf << ret << "\n";
-  return ret;
-}
-
-int main(int argc, char **argv) {
+// duration in seconds
+// return exit code
+int ipcdump(int duration, std::string outpath) {
   sample_ipc_main_t ipc;
   sample_ipc_open(&ipc); // TODO error check
-  int n = 10;
+  int sleeptime = 3; // in seconds
+  int n = duration / sleeptime;
 
   //sample_ringbuffer_t *requests = malloc(sizeof(sample_ringbuffer_t) * n);
   //if (requests = NULL) {
@@ -179,13 +172,13 @@ int main(int argc, char **argv) {
     requests.push_back(*request);
     std::cout << std::unitbuf << sample_ringbuf_count(request.get()) << " / " << SAMPLE_RINGBUF_SIZE << "\n";
     //std::cout << std::unitbuf << ".";
-    usleep(3000000); // 3s
+    usleep(sleeptime * 1000000); // n sec
   }
   std::cout << std::unitbuf << "Recording stopped.\n";
   //std::cout << std::nounitbuf;
 
   // List n_rx_packets starting with the oldest one
-  const char *filepath = "badge_sizes.csv";
+  const char *filepath = outpath.c_str();
   std::ofstream outfile;
   outfile.open(filepath);
   uint32_t n_rx_packets = 0;
@@ -200,18 +193,56 @@ int main(int argc, char **argv) {
   outfile.close();
   std::cout << "Wrote data to " << filepath << "\n";
 
+  sample_ipc_close(&ipc); 
+  return 0;
+}
+
+// retrun exit code
+int doai() {
   std::string prediction;
   
   try {
     prediction = ranger_predict();
   } catch (std::runtime_error& e) {
     std::cerr << "Error: " << e.what() << " Ranger will EXIT now." << std::endl;
-    sample_ipc_close(&ipc);
+    //sample_ipc_close(&ipc);
     return -1;
   }
   
-  sample_ipc_close(&ipc); // TODO error check
+  //sample_ipc_close(&ipc); // TODO error check
   return 0;
+}
+
+/*
+* remember to adjust the SAMPLE_RINGBUF_SIZE to 8 and SAMPLE_RINGBUF_MAP to 7 before using this test
+*/
+#include "ringbuf-test.h"
+int tests() {
+  int ret = ringbuf_test();
+  std::cout << std::unitbuf << ret << "\n";
+  return ret;
+}
+
+int main(int argc, char **argv) {
+
+  int dump_seconds = 10;
+  std::string dump_path = "outfile.csv";
+
+  if ( strcmp(argv[1], "ipcdump") == 0) {
+    dump_seconds = std::stoi(argv[2]);
+    dump_path = argv[3];
+    return ipcdump(dump_seconds, dump_path);
+  } else
+  if ( strcmp(argv[1], "doai") == 0) {
+    return doai();
+  } else {
+    std::cout << "Invalid arguments. Showing valid arguments:\n";
+    std::cout << "\n";
+    std::cout << "ipcdump <seconds> <outfile>	dump ipc for approx. seconds\n";
+    std::cout << "doai				doing ai stuff\n";
+  }
+
+  return 1;
 }
 
 int main_old(int argc, char **argv) {
