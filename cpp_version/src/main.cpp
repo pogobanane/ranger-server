@@ -181,13 +181,13 @@ int ipcdump(int duration, std::string outpath) {
   const char *filepath = outpath.c_str();
   std::ofstream outfile;
   outfile.open(filepath);
-  uint32_t n_rx_packets = 0;
+  sample_ringbuffer_data_t data;
   for (sample_ringbuffer_t &rbuf : requests) {
     for (uint32_t i = 0; i < rbuf.sizeOfBuffer; i++) {
-      if (!sample_ringbuf_pop(&rbuf, &n_rx_packets)) {
+      if (!sample_ringbuf_pop(&rbuf, &data)) {
         break;
       }
-      outfile << n_rx_packets << "\n";
+      outfile << data.port_id << "," << data.queue_id << "," << data.n_rx_packets << "\n";
     }
   }
   outfile.close();
@@ -224,6 +224,8 @@ int tests() {
 }
 
 int main(int argc, char **argv) {
+
+  //return tests();
 
   int dump_seconds = 10;
   std::string dump_path = "outfile.csv";
