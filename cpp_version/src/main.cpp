@@ -164,11 +164,13 @@ int ipcdump(int duration, std::string outpath) {
   //}
   std::vector<sample_ringbuffer_t> requests;
   std::unique_ptr<sample_ringbuffer_t> request = make_unique<sample_ringbuffer_t>();
+  sample_ipc_for_client_t response;
   
   for (int i = 0; i < n; i++) {
     std::cout << std::unitbuf << "exporting sample: ";
     //sample_ringbuffer_t *bucket = (sample_ringbuffer_t *) malloc(sizeof(sample_ringbuffer_t));
-    sample_ipc_communicate_to_client(&ipc, i, request.get());
+    response.poll1 = i;
+    sample_ipc_communicate_to_client(&ipc, &response, request.get());
     requests.push_back(*request);
     std::cout << std::unitbuf << sample_ringbuf_count(request.get()) << " / " << SAMPLE_RINGBUF_SIZE << "\n";
     //std::cout << std::unitbuf << ".";
