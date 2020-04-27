@@ -24,7 +24,7 @@ typedef struct {
     uint32_t poll2;
     uint32_t usleep;
     uint32_t poll3;
-    uint32_t use_interrupt; // actually a boolean
+    uint32_t use_interrupt; // may be used as boolean or as wait-for-interrupt-timeout
     uint32_t poll4;
 } sample_ipc_for_client_t;
 

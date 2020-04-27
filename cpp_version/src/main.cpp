@@ -215,6 +215,24 @@ int doai() {
   return 0;
 }
 
+int respond(uint32_t udelay, uint32_t usleep, uint32_t use_interrupt) {
+  sample_ipc_main_t ipc;
+  sample_ipc_open(&ipc); // TODO error check
+  std::vector<sample_ringbuffer_t> requests;
+  std::unique_ptr<sample_ringbuffer_t> request = make_unique<sample_ringbuffer_t>();
+
+  sample_ipc_for_client_t response;
+  response.udelay = udelay;
+  response.usleep = usleep;
+  response.use_interrupt = use_interrupt;
+  
+  sample_ipc_communicate_to_client(&ipc, &response, request.get());
+  requests.push_back(*request);
+
+  sample_ipc_close(&ipc); 
+  return 0;
+}
+
 /*
 * remember to adjust the SAMPLE_RINGBUF_SIZE to 8 and SAMPLE_RINGBUF_MAP to 7 before using this test
 */
@@ -232,19 +250,28 @@ int main(int argc, char **argv) {
   int dump_seconds = 10;
   std::string dump_path = "outfile.csv";
 
-  if ( strcmp(argv[1], "ipcdump") == 0) {
-    dump_seconds = std::stoi(argv[2]);
-    dump_path = argv[3];
-    return ipcdump(dump_seconds, dump_path);
-  } else
-  if ( strcmp(argv[1], "doai") == 0) {
-    return doai();
-  } else {
-    std::cout << "Invalid arguments. Showing valid arguments:\n";
-    std::cout << "\n";
-    std::cout << "ipcdump <seconds> <outfile>	dump ipc for approx. seconds\n";
-    std::cout << "doai				doing ai stuff\n";
+  if ( argc >= 2) {
+    if ( strcmp(argv[1], "ipcdump") == 0) {
+      dump_seconds = std::stoi(argv[2]);
+      dump_path = argv[3];
+      return ipcdump(dump_seconds, dump_path);
+    }
+    if ( strcmp(argv[1], "doai") == 0) {
+      return doai();
+    }
+    if ( strcmp(argv[1], "respond") == 0) {
+      return respond(
+          std::stoi(argv[2]),
+          std::stoi(argv[3]),
+          std::stoi(argv[4])
+          );
+    }
   }
+  std::cout << "Invalid arguments. Showing valid arguments:\n";
+  std::cout << "\n";
+  std::cout << "ipcdump <seconds> <outfile>	                 dump ipc for approx. seconds\n";
+  std::cout << "doai                                         doing ai stuff\n";
+  std::cout << "respond <udelay> <usleep> <use_interrupt>	   send response\n";
 
   return 1;
 }
