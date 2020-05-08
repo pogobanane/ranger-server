@@ -215,16 +215,20 @@ int doai() {
   return 0;
 }
 
-int respond(uint32_t udelay, uint32_t usleep, uint32_t use_interrupt) {
+int respond(uint32_t poll1, uint32_t udelay, uint32_t poll2, uint32_t usleep, uint32_t poll3, uint32_t use_interrupt, uint32_t poll4) {
   sample_ipc_main_t ipc;
   sample_ipc_open(&ipc); // TODO error check
   std::vector<sample_ringbuffer_t> requests;
   std::unique_ptr<sample_ringbuffer_t> request = make_unique<sample_ringbuffer_t>();
 
   sample_ipc_for_client_t response;
+  response.poll1 = poll1;
   response.udelay = udelay;
+  response.poll2 = poll2;
   response.usleep = usleep;
+  response.poll3 = poll3;
   response.use_interrupt = use_interrupt;
+  response.poll4 = poll4;
   
   sample_ipc_communicate_to_client(&ipc, &response, request.get());
   requests.push_back(*request);
@@ -263,7 +267,11 @@ int main(int argc, char **argv) {
       return respond(
           std::stoi(argv[2]),
           std::stoi(argv[3]),
-          std::stoi(argv[4])
+          std::stoi(argv[4]),
+          std::stoi(argv[5]),
+          std::stoi(argv[6]),
+          std::stoi(argv[7]),
+          std::stoi(argv[8])
           );
     }
   }
@@ -271,7 +279,8 @@ int main(int argc, char **argv) {
   std::cout << "\n";
   std::cout << "ipcdump <seconds> <outfile>	                 dump ipc for approx. seconds\n";
   std::cout << "doai                                         doing ai stuff\n";
-  std::cout << "respond <udelay> <usleep> <use_interrupt>	   send response\n";
+  std::cout << "respond <poll1> <udelay> <poll2> <usleep> <poll3> <use_interrupt>	<poll4>\n";
+  std::cout << "                                             send response\n";
 
   return 1;
 }
