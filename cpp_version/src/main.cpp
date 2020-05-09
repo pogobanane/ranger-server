@@ -151,7 +151,7 @@ std::string ranger_predict() {
 
 // duration in seconds
 // return exit code
-int ipcdump(int duration, std::string outpath) {
+int ipcdump(int duration, std::string outpath, uint32_t poll1, uint32_t udelay, uint32_t poll2, uint32_t usleep_time, uint32_t poll3, uint32_t use_interrupt, uint32_t poll4) {
   sample_ipc_main_t ipc;
   sample_ipc_open(&ipc); // TODO error check
   int sleeptime = 3; // in seconds
@@ -165,11 +165,17 @@ int ipcdump(int duration, std::string outpath) {
   std::vector<sample_ringbuffer_t> requests;
   std::unique_ptr<sample_ringbuffer_t> request = make_unique<sample_ringbuffer_t>();
   sample_ipc_for_client_t response;
-  
+  response.poll1 = poll1;
+  response.udelay = udelay;
+  response.poll2 = poll2;
+  response.usleep = usleep_time;
+  response.poll3 = poll3;
+  response.use_interrupt = use_interrupt;
+  response.poll4 = poll4;
+   
   for (int i = 0; i < n; i++) {
     std::cout << std::unitbuf << "exporting sample: ";
     //sample_ringbuffer_t *bucket = (sample_ringbuffer_t *) malloc(sizeof(sample_ringbuffer_t));
-    response.poll1 = i;
     sample_ipc_communicate_to_client(&ipc, &response, request.get());
     requests.push_back(*request);
     std::cout << std::unitbuf << sample_ringbuf_count(request.get()) << " / " << SAMPLE_RINGBUF_SIZE << "\n";
@@ -255,10 +261,23 @@ int main(int argc, char **argv) {
   std::string dump_path = "outfile.csv";
 
   if ( argc >= 2) {
-    if ( strcmp(argv[1], "ipcdump") == 0) {
+    if ( argc == 4 && strcmp(argv[1], "ipcdump") == 0) {
       dump_seconds = std::stoi(argv[2]);
       dump_path = argv[3];
-      return ipcdump(dump_seconds, dump_path);
+      return ipcdump(dump_seconds, dump_path, 32, 0, 0, 0, 0, 0, 0);
+    }
+    if ( argc == 11 && strcmp(argv[1], "ipcdump") == 0) {
+      return ipcdump(
+          std::stoi(argv[2]),
+          argv[3],
+          std::stoi(argv[4]),
+          std::stoi(argv[5]),
+          std::stoi(argv[6]),
+          std::stoi(argv[7]),
+          std::stoi(argv[8]),
+          std::stoi(argv[9]),
+          std::stoi(argv[10])
+          );
     }
     if ( strcmp(argv[1], "doai") == 0) {
       return doai();
@@ -277,9 +296,10 @@ int main(int argc, char **argv) {
   }
   std::cout << "Invalid arguments. Showing valid arguments:\n";
   std::cout << "\n";
-  std::cout << "ipcdump <seconds> <outfile>	                 dump ipc for approx. seconds\n";
+  std::cout << "ipcdump <seconds> <outfile> [<poll1> <udelay> <poll2> <usleep> <poll3> <use_interrupt> <poll4>]\n";
+  std::cout << "                                             dump ipc for approx. seconds\n";
   std::cout << "doai                                         doing ai stuff\n";
-  std::cout << "respond <poll1> <udelay> <poll2> <usleep> <poll3> <use_interrupt>	<poll4>\n";
+  std::cout << "respond <poll1> <udelay> <poll2> <usleep> <poll3> <use_interrupt> <poll4>\n";
   std::cout << "                                             send response\n";
 
   return 1;
