@@ -78,7 +78,7 @@ int ArgumentHandler::processArguments() {
     };
 
   while (1) {
-    int option_index = 2; // skip first two args of ranger wrapper
+    int option_index = 0;
     int c = getopt_long(argc, argv, short_options, long_options, &option_index);
 
     // stop if no options left
