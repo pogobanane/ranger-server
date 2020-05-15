@@ -72,7 +72,10 @@ void run_ranger(const ArgumentHandler& arg_handler, std::ostream& verbose_out) {
   verbose_out << "Finished Ranger." << std::endl;
 }
 
-std::string ranger_predict() {
+int ranger_predict() {
+  // predict a .forest trained by the following:
+  // ./ranger ranger --treetype=3 --file=data2.dat --write --outprefix=data2 --depvarname="result"
+
   std::ostream& verbose_out = std::cout;
   verbose_out << "Starting Ranger." << std::endl;
   
@@ -107,7 +110,7 @@ std::string ranger_predict() {
   uint randomsplits = DEFAULT_NUM_RANDOM_SPLITS;
   uint maxdepth = DEFAULT_MAXDEPTH;
   bool skipoob = false;
-  bool write = false;
+  //bool write = false;
 
   // Create forest object
   std::unique_ptr<Forest> forest { };
@@ -140,13 +143,14 @@ std::string ranger_predict() {
       randomsplits, maxdepth);
 
   forest->run(true, !skipoob);
-  if (write) {
-    forest->saveToFile();
-  }
-  forest->writeOutput();
-  verbose_out << "Finished Ranger." << std::endl;
+  //if (write) {
+    //forest->saveToFile();
+  //}
+  //forest->writeOutput();
+  int ret = forest->getSinglePrediction();
+  verbose_out << "Ranger Result: " << ret << std::endl;
 
-  return "return str";
+  return ret;
 }
 
 // duration in seconds
@@ -207,7 +211,7 @@ int ipcdump(int duration, std::string outpath, uint32_t poll1, uint32_t udelay, 
 
 // retrun exit code
 int doai() {
-  std::string prediction;
+  int prediction;
   
   try {
     prediction = ranger_predict();
@@ -328,6 +332,10 @@ int main(int argc, char **argv) {
     if ( strcmp(argv[1], "ranger") == 0) {
       return main_old(argc, argv);
     }
+    if ( strcmp(argv[1], "predict") == 0) {
+      ranger_predict();
+      return 0;
+    }
   }
   std::cout << "Invalid arguments. Showing valid arguments:\n";
   std::cout << "\n";
@@ -337,6 +345,7 @@ int main(int argc, char **argv) {
   std::cout << "respond <poll1> <udelay> <poll2> <usleep> <poll3> <use_interrupt> <poll4>\n";
   std::cout << "                                             send response\n";
   std::cout << "ranger [args...]                             run original ranger with args...\n";
+  std::cout << "predict                                      manual prediction\n";
 
   return 1;
 }

@@ -229,6 +229,8 @@ void ForestClassification::writeConfusionFile() {
     *verbose_out << "Saved confusion matrix to file " << filename << "." << std::endl;
 }
 
+int ForestClassification::getSinglePrediction() { return -1; }
+
 void ForestClassification::writePredictionFile() {
 
   // Open prediction file for writing

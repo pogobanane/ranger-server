@@ -157,6 +157,11 @@ void ForestRegression::writeConfusionFile() {
     *verbose_out << "Saved prediction error to file " << filename << "." << std::endl;
 }
 
+// assumes there is a prediction
+int ForestRegression::getSinglePrediction() {
+  return predictions[0][0][0];
+}
+
 void ForestRegression::writePredictionFile() {
 
 // Open prediction file for writing

@@ -216,6 +216,8 @@ void ForestProbability::writeConfusionFile() {
     *verbose_out << "Saved prediction error to file " << filename << "." << std::endl;
 }
 
+int ForestProbability::getSinglePrediction() { return -1; }
+
 void ForestProbability::writePredictionFile() {
 
   // Open prediction file for writing

@@ -73,6 +73,7 @@ public:
   virtual void writeOutputInternal() = 0;
   virtual void writeConfusionFile() = 0;
   virtual void writePredictionFile() = 0;
+  virtual int getSinglePrediction() = 0;
   void writeImportanceFile();
 
   // Save forest to file

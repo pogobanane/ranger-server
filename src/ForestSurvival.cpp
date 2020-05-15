@@ -218,6 +218,8 @@ void ForestSurvival::writeConfusionFile() {
 
 }
 
+int ForestSurvival::getSinglePrediction() { return -1; }
+
 void ForestSurvival::writePredictionFile() {
 
   // Open prediction file for writing
