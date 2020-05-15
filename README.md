@@ -42,6 +42,9 @@ After compilation there should be an executable called "ranger" in the build dir
 
 To run the C++ version in Microsoft Windows please cross compile or ask for a binary.
 
+To build the docs install texlive, texlive-fonts-extra, r-core and run `R CMD Rd2pdf ./man`
+
+
 ### Usage
 #### R version
 For usage of the R version see ?ranger in R. Most importantly, see the Examples section. As a first example you could try 
