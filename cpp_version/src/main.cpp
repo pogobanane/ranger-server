@@ -77,7 +77,7 @@ std::string ranger_predict() {
   verbose_out << "Starting Ranger." << std::endl;
   
   // ranger parameters
-  TreeType treetype = TREE_CLASSIFICATION;
+  TreeType treetype = TREE_REGRESSION;
   bool probability = false;
   std::string depvarname = "";
   MemoryMode memmode = MEM_DOUBLE;
@@ -243,6 +243,38 @@ int respond(uint32_t poll1, uint32_t udelay, uint32_t poll2, uint32_t usleep, ui
   return 0;
 }
 
+// original ranger main
+int main_old(int argc, char **argv) {
+
+  //sample_ipc_main_t ipc;
+  //sample_ipc_open(&ipc);
+  try {
+    // Handle command line arguments
+    ArgumentHandler arg_handler(argc, argv);
+    if (arg_handler.processArguments() != 0) {
+      return 0;
+    }
+    arg_handler.checkArguments();
+
+    if (arg_handler.verbose) {
+      run_ranger(arg_handler, std::cout);
+    } else {
+      std::ofstream logfile { arg_handler.outprefix + ".log" };
+      if (!logfile.good()) {
+        throw std::runtime_error("Could not write to logfile.");
+      }
+      run_ranger(arg_handler, logfile);
+    }
+  } catch (std::exception& e) {
+    std::cerr << "Error: " << e.what() << " Ranger will EXIT now." << std::endl;
+    //sample_ipc_close(&ipc);
+    return -1;
+  }
+
+  //sample_ipc_close(&ipc);
+  return 0;
+}
+
 /*
 * remember to adjust the SAMPLE_RINGBUF_SIZE to 8 and SAMPLE_RINGBUF_MAP to 7 before using this test
 */
@@ -293,6 +325,9 @@ int main(int argc, char **argv) {
           std::stoi(argv[8])
           );
     }
+    if ( strcmp(argv[1], "ranger") == 0) {
+      return main_old(argc, argv);
+    }
   }
   std::cout << "Invalid arguments. Showing valid arguments:\n";
   std::cout << "\n";
@@ -301,37 +336,8 @@ int main(int argc, char **argv) {
   std::cout << "doai                                         doing ai stuff\n";
   std::cout << "respond <poll1> <udelay> <poll2> <usleep> <poll3> <use_interrupt> <poll4>\n";
   std::cout << "                                             send response\n";
+  std::cout << "ranger [args...]                             run original ranger with args...\n";
 
   return 1;
 }
 
-int main_old(int argc, char **argv) {
-
-  sample_ipc_main_t ipc;
-  sample_ipc_open(&ipc);
-  try {
-    // Handle command line arguments
-    ArgumentHandler arg_handler(argc, argv);
-    if (arg_handler.processArguments() != 0) {
-      return 0;
-    }
-    arg_handler.checkArguments();
-
-    if (arg_handler.verbose) {
-      run_ranger(arg_handler, std::cout);
-    } else {
-      std::ofstream logfile { arg_handler.outprefix + ".log" };
-      if (!logfile.good()) {
-        throw std::runtime_error("Could not write to logfile.");
-      }
-      run_ranger(arg_handler, logfile);
-    }
-  } catch (std::exception& e) {
-    std::cerr << "Error: " << e.what() << " Ranger will EXIT now." << std::endl;
-    sample_ipc_close(&ipc);
-    return -1;
-  }
-
-  sample_ipc_close(&ipc);
-  return 0;
-}
