@@ -211,17 +211,43 @@ int ipcdump(int duration, std::string outpath, uint32_t poll1, uint32_t udelay, 
 
 // retrun exit code
 int doai() {
-  int prediction;
-  
-  try {
-    prediction = ranger_predict();
-  } catch (std::runtime_error& e) {
-    std::cerr << "Error: " << e.what() << " Ranger will EXIT now." << std::endl;
-    //sample_ipc_close(&ipc);
-    return -1;
-  }
-  
-  //sample_ipc_close(&ipc); // TODO error check
+  sample_ipc_main_t ipc;
+  sample_ipc_open(&ipc);
+  std::unique_ptr<sample_ringbuffer_t> request = make_unique<sample_ringbuffer_t>();
+  std::vector<sample_ringbuffer_data_t> values;
+
+  sample_ipc_for_client_t response;
+  response.poll1 = 32;
+  response.udelay = 0;
+  response.poll2 = 0;
+  response.usleep = 1;
+  response.poll3 = 32;
+  response.use_interrupt = 0;
+  response.poll4 = 0;
+   
+  //while(true) {
+    sample_ipc_communicate_to_client(&ipc, &response, request.get());
+    for (int i = 0; i < 100; i++) {
+      sample_ringbuffer_data_t d;
+      if (!sample_ringbuf_pop(request.get(), &d)) {
+        std::cout << "Not enough datapoints received!\n";
+        sample_ipc_close(&ipc);
+        return 1;
+      }
+      values.push_back(d);
+    }
+    try {
+      // vector has 100 datapoints. feed it now. TODO
+      response.usleep = ranger_predict();
+    } catch (std::runtime_error& e) {
+      std::cerr << "Error: " << e.what() << " Ranger will EXIT now." << std::endl;
+      sample_ipc_close(&ipc);
+      return -1;
+    }
+  //}
+  sample_ipc_communicate_to_client(&ipc, &response, request.get());
+
+  sample_ipc_close(&ipc);
   return 0;
 }
 
