@@ -40,6 +40,14 @@ public:
   virtual ~Forest() = default;
 
   // Init from c++ main or Rcpp from R
+   void initCppFast(std::string dependent_variable_name, MemoryMode memory_mode, std::vector<uint32_t> data, uint mtry,
+      std::string output_prefix, uint num_trees, std::ostream* verbose_out, uint seed, uint num_threads,
+      std::string load_forest_filename, ImportanceMode importance_mode, uint min_node_size,
+      std::string split_select_weights_file, const std::vector<std::string>& always_split_variable_names,
+      std::string status_variable_name, bool sample_with_replacement,
+      const std::vector<std::string>& unordered_variable_names, bool memory_saving_splitting, SplitRule splitrule,
+      std::string case_weights_file, bool predict_all, double sample_fraction, double alpha, double minprop,
+      bool holdout, PredictionType prediction_type, uint num_random_splits, uint max_depth);
   void initCpp(std::string dependent_variable_name, MemoryMode memory_mode, std::string input_file, uint mtry,
       std::string output_prefix, uint num_trees, std::ostream* verbose_out, uint seed, uint num_threads,
       std::string load_forest_filename, ImportanceMode importance_mode, uint min_node_size,

@@ -72,7 +72,7 @@ void run_ranger(const ArgumentHandler& arg_handler, std::ostream& verbose_out) {
   verbose_out << "Finished Ranger." << std::endl;
 }
 
-int ranger_predict() {
+int ranger_predict(std::vector<uint32_t> data) {
   // predict a .forest trained by the following:
   // ./ranger ranger --treetype=3 --file=data2.dat --write --outprefix=data2 --depvarname="result"
 
@@ -84,7 +84,7 @@ int ranger_predict() {
   bool probability = false;
   std::string depvarname = "";
   MemoryMode memmode = MEM_DOUBLE;
-  std::string file = "data2.dat";
+
   uint mtry = 0;
   std::string outprefix = "data2-ipced";
   uint ntree = DEFAULT_NUM_TREE;
@@ -134,7 +134,7 @@ int ranger_predict() {
   }
 
   // Call Ranger
-  forest->initCpp(depvarname, memmode, file, mtry,
+  forest->initCppFast(depvarname, memmode, data, mtry,
       outprefix, ntree, &verbose_out, seed, nthreads,
       predict, impmeasure, targetpartitionsize, splitweights,
       alwayssplitvars, statusvarname, replace, catvars,
@@ -209,12 +209,18 @@ int ipcdump(int duration, std::string outpath, uint32_t poll1, uint32_t udelay, 
   return 0;
 }
 
-// retrun exit code
+/*
+ * 1. get info from client
+ * 2. do prediction with info
+ * 3. send response to client
+ *
+ * return exit code
+ */
 int doai() {
   sample_ipc_main_t ipc;
   sample_ipc_open(&ipc);
   std::unique_ptr<sample_ringbuffer_t> request = make_unique<sample_ringbuffer_t>();
-  std::vector<sample_ringbuffer_data_t> values;
+  std::vector<uint32_t> values = {};
 
   sample_ipc_for_client_t response;
   response.poll1 = 32;
@@ -227,24 +233,33 @@ int doai() {
    
   //while(true) {
     sample_ipc_communicate_to_client(&ipc, &response, request.get());
-    for (int i = 0; i < 100; i++) {
+
+    // read as many datapoints as we need
+    int i = 0;
+    while (i < 100) {
       sample_ringbuffer_data_t d;
       if (!sample_ringbuf_pop(request.get(), &d)) {
         std::cout << "Not enough datapoints received!\n";
         sample_ipc_close(&ipc);
         return 1;
       }
-      values.push_back(d);
+      if (d.port_id == 1 && d.queue_id == 0) {
+        values.push_back(d.n_rx_packets);
+        i++;
+      }
     }
+
+    // run prediction
     try {
-      // vector has 100 datapoints. feed it now. TODO
-      response.usleep = ranger_predict();
+      response.usleep = ranger_predict(values);
     } catch (std::runtime_error& e) {
       std::cerr << "Error: " << e.what() << " Ranger will EXIT now." << std::endl;
       sample_ipc_close(&ipc);
       return -1;
     }
   //}
+  
+  // communicate last prediction to client
   sample_ipc_communicate_to_client(&ipc, &response, request.get());
 
   sample_ipc_close(&ipc);
@@ -359,7 +374,9 @@ int main(int argc, char **argv) {
       return main_old(argc, argv);
     }
     if ( strcmp(argv[1], "predict") == 0) {
-      ranger_predict();
+      std::vector<uint32_t> data = {};
+      for (int i = 0; i < 100; i++) { data.push_back(i); }
+      ranger_predict(data);
       return 0;
     }
   }
