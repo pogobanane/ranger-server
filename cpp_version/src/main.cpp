@@ -211,7 +211,7 @@ int ipcdump(int duration, std::string outpath, uint32_t poll1, uint32_t udelay, 
 
 /*
  * 1. get info from client
- * 2. do prediction with info
+ * 2. do prediction with info for port 0 queue 0
  * 3. send response to client
  *
  * return exit code
@@ -235,6 +235,7 @@ int doai() {
     sample_ipc_communicate_to_client(&ipc, &response, request.get());
 
     // read as many datapoints as we need
+    // TODO: always keep the 100 latest datapoints and use them
     int i = 0;
     while (i < 100) {
       sample_ringbuffer_data_t d;
@@ -243,7 +244,7 @@ int doai() {
         sample_ipc_close(&ipc);
         return 1;
       }
-      if (d.port_id == 1 && d.queue_id == 0) {
+      if (d.port_id == 0 && d.queue_id == 0) {
         values.push_back(d.n_rx_packets);
         i++;
       }

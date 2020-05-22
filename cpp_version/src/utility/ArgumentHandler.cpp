@@ -12,6 +12,7 @@ R package "ranger" under GPL3 license.
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
+#include <string.h>
 
 #include "ArgumentHandler.h"
 #include "version.h"
@@ -405,7 +406,10 @@ int ArgumentHandler::processArguments() {
 
   // print all other parameters
   while (optind < argc) {
-    std::cout << "Other parameter, not processed: " << argv[optind++] << std::endl;
+    // suppress warnings for "not processed: ranger" as we use this arguent to decide wether to call this arg parser
+    if (strcmp(argv[optind++], "ranger") != 0) { 
+      std::cout << "Other parameter, not processed: " << argv[optind++] << std::endl;
+    }
   }
 
   return 0;
