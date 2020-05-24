@@ -376,9 +376,9 @@ void Forest::init(std::string dependent_variable_name, MemoryMode memory_mode, s
 void Forest::run(bool verbose, bool compute_oob_error) {
 
   if (prediction_mode) {
-    if (verbose && verbose_out) {
-      *verbose_out << "Predicting .." << std::endl;
-    }
+    //if (verbose && verbose_out) {
+      //*verbose_out << "Predicting .." << std::endl;
+    //}
     predict();
   } else {
     if (verbose && verbose_out) {
@@ -895,8 +895,8 @@ void Forest::computeTreePermutationImportanceInThread(uint thread_idx, std::vect
 
 // #nocov start
 void Forest::loadFromFile(std::string filename) {
-  if (verbose_out)
-    *verbose_out << "Loading forest from file " << filename << "." << std::endl;
+  //if (verbose_out)
+    //*verbose_out << "Loading forest from file " << filename << "." << std::endl;
 
 // Open file for reading
   std::ifstream infile;

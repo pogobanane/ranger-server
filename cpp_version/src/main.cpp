@@ -77,7 +77,7 @@ int ranger_predict(std::deque<uint32_t> data) {
   // ./ranger ranger --treetype=3 --file=data2.dat --write --outprefix=data2 --depvarname="result"
 
   std::ostream& verbose_out = std::cout;
-  verbose_out << "Starting Ranger." << std::endl;
+  //verbose_out << "Starting Ranger." << std::endl;
   
   // ranger parameters
   TreeType treetype = TREE_REGRESSION;
@@ -142,13 +142,13 @@ int ranger_predict(std::deque<uint32_t> data) {
       alpha, minprop, holdout, predictiontype,
       randomsplits, maxdepth);
 
-  forest->run(true, !skipoob);
+  forest->run(false, !skipoob);
   //if (write) {
     //forest->saveToFile();
   //}
   //forest->writeOutput();
   int ret = forest->getSinglePrediction();
-  verbose_out << "Ranger Result: " << ret << std::endl;
+  //verbose_out << "Ranger Result: " << ret << std::endl;
 
   return ret;
 }
