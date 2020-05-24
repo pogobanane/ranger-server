@@ -243,11 +243,12 @@ int doai(bool loop) {
       sample_ringbuffer_data_t d;
       if (!sample_ringbuf_pop(request.get(), &d)) {
         std::cout << "Not enough datapoints received!\n";
-        sample_ipc_close(&ipc);
-        return 1;
+        //sample_ipc_close(&ipc);
+        //return 1;
       }
       if (d.port_id == 0 && d.queue_id == 0) {
         values.push_back(d.n_rx_packets);
+        values.pop_front();
         i++;
       }
     }
@@ -395,7 +396,7 @@ int main(int argc, char **argv) {
   std::cout << "respond <poll1> <udelay> <poll2> <usleep> <poll3> <use_interrupt> <poll4>\n";
   std::cout << "                                             send response\n";
   std::cout << "ranger [args...]                             run original ranger with args...\n";
-  std::cout << "predict                                      manual prediction\n";
+  std::cout << "predict                                      manual prediction of {0,1,...99}\n";
 
   return 1;
 }
