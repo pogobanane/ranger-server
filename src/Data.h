@@ -13,6 +13,7 @@
 #define DATA_H_
 
 #include <vector>
+#include <deque>
 #include <iostream>
 #include <numeric>
 #include <random>
@@ -41,7 +42,7 @@ public:
   void addSnpData(unsigned char* snp_data, size_t num_cols_snp);
 
   bool loadFromFile(std::string filename);
-  bool load(std::vector<uint32_t> data);
+  bool load(std::deque<uint32_t> data);
   bool loadFromFileWhitespace(std::ifstream& input_file, std::string header_line);
   bool loadFromFileOther(std::ifstream& input_file, std::string header_line, char seperator);
 

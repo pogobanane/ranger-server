@@ -117,7 +117,7 @@ bool Data::loadFromFileWhitespace(std::ifstream& input_file, std::string header_
   return error;
 }
 
-bool Data::load(std::vector<uint32_t> data) {
+bool Data::load(std::deque<uint32_t> data) {
   int size = data.size();
   num_cols = size;
   num_cols_no_snp = size;
@@ -129,7 +129,8 @@ bool Data::load(std::vector<uint32_t> data) {
     std::ostringstream o;
     o << "a" << i;
     variable_names.push_back(o.str());
-    set(i, 0, data[i], error);
+    set(i, 0, data.front(), error);
+    data.pop_front();
   }
 
   return error;

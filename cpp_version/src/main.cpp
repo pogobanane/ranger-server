@@ -72,7 +72,7 @@ void run_ranger(const ArgumentHandler& arg_handler, std::ostream& verbose_out) {
   verbose_out << "Finished Ranger." << std::endl;
 }
 
-int ranger_predict(std::vector<uint32_t> data) {
+int ranger_predict(std::deque<uint32_t> data) {
   // predict a .forest trained by the following:
   // ./ranger ranger --treetype=3 --file=data2.dat --write --outprefix=data2 --depvarname="result"
 
@@ -222,7 +222,8 @@ int doai(bool loop) {
   sample_ipc_main_t ipc;
   sample_ipc_open(&ipc);
   std::unique_ptr<sample_ringbuffer_t> request = make_unique<sample_ringbuffer_t>();
-  std::vector<uint32_t> values = {};
+  std::deque<uint32_t> values = {};
+  for (int i = 0; i < 100; i++) { values.push_back(0); }
 
   sample_ipc_for_client_t response;
   response.poll1 = 32;
@@ -242,9 +243,8 @@ int doai(bool loop) {
     while (i < 100) {
       sample_ringbuffer_data_t d;
       if (!sample_ringbuf_pop(request.get(), &d)) {
-        std::cout << "Not enough datapoints received!\n";
-        //sample_ipc_close(&ipc);
-        //return 1;
+        //std::cout << "Not enough datapoints received!\n";
+        break;
       }
       if (d.port_id == 0 && d.queue_id == 0) {
         values.push_back(d.n_rx_packets);
@@ -381,8 +381,8 @@ int main(int argc, char **argv) {
       return main_old(argc, argv);
     }
     if ( strcmp(argv[1], "predict") == 0) {
-      std::vector<uint32_t> data = {};
-      for (int i = 0; i < 100; i++) { data.push_back(i); }
+      std::deque<uint32_t> data = {};
+      for (int i = 0; i < 100; i++) { data.push_back(std::stoi(argv[2])); }
       ranger_predict(data);
       return 0;
     }
@@ -396,7 +396,7 @@ int main(int argc, char **argv) {
   std::cout << "respond <poll1> <udelay> <poll2> <usleep> <poll3> <use_interrupt> <poll4>\n";
   std::cout << "                                             send response\n";
   std::cout << "ranger [args...]                             run original ranger with args...\n";
-  std::cout << "predict                                      manual prediction of {0,1,...99}\n";
+  std::cout << "predict <n>                                  manual prediction of {n,n,...n}\n";
 
   return 1;
 }

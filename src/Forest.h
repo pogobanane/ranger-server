@@ -13,6 +13,7 @@
 #define FOREST_H_
 
 #include <vector>
+#include <deque>
 #include <iostream>
 #include <random>
 #include <ctime>
@@ -40,7 +41,7 @@ public:
   virtual ~Forest() = default;
 
   // Init from c++ main or Rcpp from R
-   void initCppFast(std::string dependent_variable_name, MemoryMode memory_mode, std::vector<uint32_t> data, uint mtry,
+   void initCppFast(std::string dependent_variable_name, MemoryMode memory_mode, std::deque<uint32_t> data, uint mtry,
       std::string output_prefix, uint num_trees, std::ostream* verbose_out, uint seed, uint num_threads,
       std::string load_forest_filename, ImportanceMode importance_mode, uint min_node_size,
       std::string split_select_weights_file, const std::vector<std::string>& always_split_variable_names,

@@ -9,6 +9,7 @@
  R package "ranger" under GPL3 license.
  #-------------------------------------------------------------------------------*/
 
+#include <deque>
 #include <math.h>
 #include <algorithm>
 #include <stdexcept>
@@ -37,7 +38,7 @@ Forest::Forest() :
     NAN), importance_mode(DEFAULT_IMPORTANCE_MODE), progress(0) {
 }
 
-std::unique_ptr<Data> load_data(std::vector<uint32_t> data, const MemoryMode memory_mode) {
+std::unique_ptr<Data> load_data(std::deque<uint32_t> data, const MemoryMode memory_mode) {
   std::unique_ptr<Data> result { };
   switch (memory_mode) {
   case MEM_DOUBLE:
@@ -80,7 +81,7 @@ std::unique_ptr<Data> load_data_from_file(const std::string& data_path, const Me
   return result;
 }
 
-void Forest::initCppFast(std::string dependent_variable_name, MemoryMode memory_mode, std::vector<uint32_t> data_a, uint mtry,
+void Forest::initCppFast(std::string dependent_variable_name, MemoryMode memory_mode, std::deque<uint32_t> data_a, uint mtry,
     std::string output_prefix, uint num_trees, std::ostream* verbose_out, uint seed, uint num_threads,
     std::string load_forest_filename, ImportanceMode importance_mode, uint min_node_size,
     std::string split_select_weights_file, const std::vector<std::string>& always_split_variable_names,
