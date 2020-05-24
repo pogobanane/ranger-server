@@ -17,6 +17,7 @@ Please note that the C++ core of ranger is distributed under MIT license and the
 #include <unistd.h>
 #include <stdio.h>
 #include <inttypes.h>
+#include <chrono>
 
 #include "globals.h"
 #include "ArgumentHandler.h"
@@ -72,12 +73,12 @@ void run_ranger(const ArgumentHandler& arg_handler, std::ostream& verbose_out) {
   verbose_out << "Finished Ranger." << std::endl;
 }
 
-int ranger_predict(std::deque<uint32_t> data) {
+int ranger_predict(std::deque<uint32_t> data, bool verbose) {
   // predict a .forest trained by the following:
   // ./ranger ranger --treetype=3 --file=data2.dat --write --outprefix=data2 --depvarname="result"
 
   std::ostream& verbose_out = std::cout;
-  //verbose_out << "Starting Ranger." << std::endl;
+  if (verbose) verbose_out << "Starting Ranger." << std::endl;
   
   // ranger parameters
   TreeType treetype = TREE_REGRESSION;
@@ -142,13 +143,13 @@ int ranger_predict(std::deque<uint32_t> data) {
       alpha, minprop, holdout, predictiontype,
       randomsplits, maxdepth);
 
-  forest->run(false, !skipoob);
+  forest->run(verbose, !skipoob);
   //if (write) {
     //forest->saveToFile();
   //}
   //forest->writeOutput();
   int ret = forest->getSinglePrediction();
-  //verbose_out << "Ranger Result: " << ret << std::endl;
+  if (verbose) verbose_out << "Ranger Result: " << ret << std::endl;
 
   return ret;
 }
@@ -234,6 +235,8 @@ int doai(bool loop) {
   response.use_interrupt = 0;
   response.poll4 = 0;
    
+  auto mseconds = std::chrono::high_resolution_clock::now();
+  int pps = 0; // prediction per second
   while(loop) {
     sample_ipc_communicate_to_client(&ipc, &response, request.get());
 
@@ -255,11 +258,18 @@ int doai(bool loop) {
 
     // run prediction
     try {
-      response.usleep = ranger_predict(values);
+      response.usleep = ranger_predict(values, false);
     } catch (std::runtime_error& e) {
       std::cerr << "Error: " << e.what() << " Ranger will EXIT now." << std::endl;
       sample_ipc_close(&ipc);
       return -1;
+    }
+    pps++;
+    auto now = std::chrono::high_resolution_clock::now();
+    if (std::chrono::duration_cast<std::chrono::milliseconds>(mseconds - now) > std::chrono::microseconds(1000)) {
+      std::cout << pps << " predictions per second" << std::endl;
+      mseconds = now;
+      pps = 0;
     }
   }
   
@@ -383,7 +393,7 @@ int main(int argc, char **argv) {
     if ( strcmp(argv[1], "predict") == 0) {
       std::deque<uint32_t> data = {};
       for (int i = 0; i < 100; i++) { data.push_back(std::stoi(argv[2])); }
-      ranger_predict(data);
+      ranger_predict(data, true);
       return 0;
     }
   }
