@@ -210,13 +210,15 @@ int ipcdump(int duration, std::string outpath, uint32_t poll1, uint32_t udelay, 
 }
 
 /*
+ * param: if true doai loops itself forever
+ *
  * 1. get info from client
  * 2. do prediction with info for port 0 queue 0
  * 3. send response to client
  *
  * return exit code
  */
-int doai() {
+int doai(bool loop) {
   sample_ipc_main_t ipc;
   sample_ipc_open(&ipc);
   std::unique_ptr<sample_ringbuffer_t> request = make_unique<sample_ringbuffer_t>();
@@ -231,7 +233,7 @@ int doai() {
   response.use_interrupt = 0;
   response.poll4 = 0;
    
-  //while(true) {
+  while(loop) {
     sample_ipc_communicate_to_client(&ipc, &response, request.get());
 
     // read as many datapoints as we need
@@ -258,7 +260,7 @@ int doai() {
       sample_ipc_close(&ipc);
       return -1;
     }
-  //}
+  }
   
   // communicate last prediction to client
   sample_ipc_communicate_to_client(&ipc, &response, request.get());
@@ -358,7 +360,10 @@ int main(int argc, char **argv) {
           );
     }
     if ( strcmp(argv[1], "doai") == 0) {
-      return doai();
+      return doai(false);
+    }
+    if ( strcmp(argv[1], "doai-loop") == 0) {
+      return doai(true);
     }
     if ( strcmp(argv[1], "respond") == 0) {
       return respond(
@@ -385,7 +390,8 @@ int main(int argc, char **argv) {
   std::cout << "\n";
   std::cout << "ipcdump <seconds> <outfile> [<poll1> <udelay> <poll2> <usleep> <poll3> <use_interrupt> <poll4>]\n";
   std::cout << "                                             dump ipc for approx. seconds\n";
-  std::cout << "doai                                         doing ai stuff\n";
+  std::cout << "doai                                         doing ai stuff once\n";
+  std::cout << "doai-loop                                    doing ai stuff until pkill\n";
   std::cout << "respond <poll1> <udelay> <poll2> <usleep> <poll3> <use_interrupt> <poll4>\n";
   std::cout << "                                             send response\n";
   std::cout << "ranger [args...]                             run original ranger with args...\n";
