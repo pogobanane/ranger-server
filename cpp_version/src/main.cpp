@@ -266,7 +266,7 @@ int doai(bool loop) {
     }
     pps++;
     auto now = std::chrono::high_resolution_clock::now();
-    if (std::chrono::duration_cast<std::chrono::milliseconds>(mseconds - now) > std::chrono::microseconds(1000)) {
+    if (std::chrono::duration_cast<std::chrono::milliseconds>(now - mseconds) > std::chrono::milliseconds(1000)) {
       std::cout << pps << " predictions per second" << std::endl;
       mseconds = now;
       pps = 0;
