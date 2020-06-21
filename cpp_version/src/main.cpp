@@ -220,7 +220,7 @@ int ipcdump(int duration, std::string outpath, uint32_t poll1, uint32_t udelay, 
  *
  * return exit code
  */
-int doai(bool loop) {
+int doai(bool loop, std::string outpath) {
   std::ofstream outfile;
 
   sample_ipc_main_t ipc;
@@ -241,7 +241,7 @@ int doai(bool loop) {
   // save prediction input and output to file to create training sets
   if(!loop) {
     try {
-      outfile.open("forestio.csv");
+      outfile.open(outpath.c_str());
     } catch (std::ios_base::failure& e) {
       std::cerr << "Error: " << e.what() << " Ranger will EXIT now." << std::endl;
       sample_ipc_close(&ipc);
@@ -389,10 +389,10 @@ int main(int argc, char **argv) {
           );
     }
     if ( strcmp(argv[1], "doai") == 0) {
-      return doai(false);
+      return doai(false, argv[2]);
     }
     if ( strcmp(argv[1], "doai-loop") == 0) {
-      return doai(true);
+      return doai(true, "");
     }
     if ( strcmp(argv[1], "respond") == 0) {
       return respond(
@@ -419,7 +419,7 @@ int main(int argc, char **argv) {
   std::cout << "\n";
   std::cout << "ipcdump <seconds> <outfile> [<poll1> <udelay> <poll2> <usleep> <poll3> <use_interrupt> <poll4>]\n";
   std::cout << "                                             dump ipc for approx. seconds\n";
-  std::cout << "doai                                         doing ai stuff once and write forest i/o to forestio.csv\n";
+  std::cout << "doai <outfile>                             doing ai stuff once and write forest i/o to outfile\n";
   std::cout << "doai-loop                                    doing ai stuff until pkill\n";
   std::cout << "respond <poll1> <udelay> <poll2> <usleep> <poll3> <use_interrupt> <poll4>\n";
   std::cout << "                                             send response\n";
