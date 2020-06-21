@@ -212,6 +212,7 @@ int ipcdump(int duration, std::string outpath, uint32_t poll1, uint32_t udelay, 
 
 /*
  * param: if true doai loops itself forever
+ *        if false it appends forest input and output data to prefix + forestio.csv
  *
  * 1. get info from client
  * 2. do prediction with info for port 0 queue 0
@@ -220,6 +221,8 @@ int ipcdump(int duration, std::string outpath, uint32_t poll1, uint32_t udelay, 
  * return exit code
  */
 int doai(bool loop) {
+  std::ofstream outfile;
+
   sample_ipc_main_t ipc;
   sample_ipc_open(&ipc);
   std::unique_ptr<sample_ringbuffer_t> request = make_unique<sample_ringbuffer_t>();
@@ -234,6 +237,18 @@ int doai(bool loop) {
   response.poll3 = 32;
   response.use_interrupt = 0;
   response.poll4 = 0;
+
+  // save prediction input and output to file to create training sets
+  if(!loop) {
+    try {
+      outfile.open("forestio.csv");
+    } catch (std::ios_base::failure& e) {
+      std::cerr << "Error: " << e.what() << " Ranger will EXIT now." << std::endl;
+      sample_ipc_close(&ipc);
+      return -1;
+    }
+    outfile << "# colunm names stub\n";
+  }
    
   auto mseconds = std::chrono::high_resolution_clock::now();
   int pps = 0; // prediction per second
@@ -250,6 +265,7 @@ int doai(bool loop) {
         break;
       }
       if (d.port_id == 0 && d.queue_id == 0) {
+        outfile << d.n_rx_packets << " ";
         values.push_back(d.n_rx_packets);
         values.pop_front();
         i++;
@@ -259,6 +275,7 @@ int doai(bool loop) {
     // run prediction
     try {
       response.usleep = ranger_predict(values, false);
+      outfile << response.usleep << "\n";
     } catch (std::runtime_error& e) {
       std::cerr << "Error: " << e.what() << " Ranger will EXIT now." << std::endl;
       sample_ipc_close(&ipc);
@@ -276,6 +293,7 @@ int doai(bool loop) {
   // communicate last prediction to client
   sample_ipc_communicate_to_client(&ipc, &response, request.get());
 
+  outfile.close();
   sample_ipc_close(&ipc);
   return 0;
 }
@@ -401,7 +419,7 @@ int main(int argc, char **argv) {
   std::cout << "\n";
   std::cout << "ipcdump <seconds> <outfile> [<poll1> <udelay> <poll2> <usleep> <poll3> <use_interrupt> <poll4>]\n";
   std::cout << "                                             dump ipc for approx. seconds\n";
-  std::cout << "doai                                         doing ai stuff once\n";
+  std::cout << "doai                                         doing ai stuff once and write forest i/o to forestio.csv\n";
   std::cout << "doai-loop                                    doing ai stuff until pkill\n";
   std::cout << "respond <poll1> <udelay> <poll2> <usleep> <poll3> <use_interrupt> <poll4>\n";
   std::cout << "                                             send response\n";
