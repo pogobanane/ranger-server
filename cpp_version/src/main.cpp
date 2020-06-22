@@ -238,21 +238,20 @@ int doai(bool loop, std::string outpath) {
   response.use_interrupt = 0;
   response.poll4 = 0;
 
-  // save prediction input and output to file to create training sets
+  // append prediction input and output to file to create training sets
   if(!loop) {
     try {
-      outfile.open(outpath.c_str());
+      outfile.open(outpath.c_str(), std::ios::app);
     } catch (std::ios_base::failure& e) {
       std::cerr << "Error: " << e.what() << " Ranger will EXIT now." << std::endl;
       sample_ipc_close(&ipc);
       return -1;
     }
-    outfile << "# colunm names stub\n";
   }
    
   auto mseconds = std::chrono::high_resolution_clock::now();
   int pps = 0; // prediction per second
-  while(loop) {
+  do {  // while true (but run at least once)
     sample_ipc_communicate_to_client(&ipc, &response, request.get());
 
     // read as many datapoints as we need
@@ -288,7 +287,7 @@ int doai(bool loop, std::string outpath) {
       mseconds = now;
       pps = 0;
     }
-  }
+  } while (loop);
   
   // communicate last prediction to client
   sample_ipc_communicate_to_client(&ipc, &response, request.get());
@@ -419,7 +418,7 @@ int main(int argc, char **argv) {
   std::cout << "\n";
   std::cout << "ipcdump <seconds> <outfile> [<poll1> <udelay> <poll2> <usleep> <poll3> <use_interrupt> <poll4>]\n";
   std::cout << "                                             dump ipc for approx. seconds\n";
-  std::cout << "doai <outfile>                             doing ai stuff once and write forest i/o to outfile\n";
+  std::cout << "doai <outfile>                             doing ai stuff once and append forest i/o to outfile\n";
   std::cout << "doai-loop                                    doing ai stuff until pkill\n";
   std::cout << "respond <poll1> <udelay> <poll2> <usleep> <poll3> <use_interrupt> <poll4>\n";
   std::cout << "                                             send response\n";
