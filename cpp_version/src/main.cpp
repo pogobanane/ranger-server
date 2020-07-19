@@ -73,11 +73,7 @@ void run_ranger(const ArgumentHandler& arg_handler, std::ostream& verbose_out) {
   verbose_out << "Finished Ranger." << std::endl;
 }
 
-int ranger_init(std::deque<uint32_t> data, bool verbose) {
-  return true;
-}
-
-int ranger_predict(std::deque<uint32_t> data, bool verbose) {
+void ranger_init(std::unique_ptr<Forest> & forest, std::deque<uint32_t> data, bool verbose) {
   // predict a .forest trained by the following:
   // ./ranger ranger --treetype=3 --file=data2.dat --write --outprefix=data2 --depvarname="result"
 
@@ -114,11 +110,10 @@ int ranger_predict(std::deque<uint32_t> data, bool verbose) {
   PredictionType predictiontype = DEFAULT_PREDICTIONTYPE;
   uint randomsplits = DEFAULT_NUM_RANDOM_SPLITS;
   uint maxdepth = DEFAULT_MAXDEPTH;
-  bool skipoob = false;
   //bool write = false;
 
   // Create forest object
-  std::unique_ptr<Forest> forest { };
+  //std::unique_ptr<Forest> forest { };
   switch (treetype) {
   case TREE_CLASSIFICATION:
     if (probability) {
@@ -146,6 +141,11 @@ int ranger_predict(std::deque<uint32_t> data, bool verbose) {
       savemem, splitrule, caseweights, predall, fraction,
       alpha, minprop, holdout, predictiontype,
       randomsplits, maxdepth);
+}
+
+int ranger_predict(std::unique_ptr<Forest> & forest, std::deque<uint32_t> data, bool verbose) {
+  bool skipoob = false;
+  std::ostream& verbose_out = std::cout;
 
   forest->run(verbose, !skipoob);
   //if (write) {
@@ -232,7 +232,9 @@ int doai(bool loop, std::string outpath) {
   std::unique_ptr<sample_ringbuffer_t> request = make_unique<sample_ringbuffer_t>();
   std::deque<uint32_t> values = {};
   for (int i = 0; i < 100; i++) { values.push_back(0); }
-
+  std::unique_ptr<Forest> forest { };
+  ranger_init(forest, values, false);
+      
   sample_ipc_for_client_t response;
   response.poll1 = 32;
   response.udelay = 0;
@@ -277,7 +279,7 @@ int doai(bool loop, std::string outpath) {
 
     // run prediction
     try {
-      response.usleep = ranger_predict(values, false);
+      response.usleep = ranger_predict(forest, values, false);
       outfile << response.usleep << "\n";
     } catch (std::runtime_error& e) {
       std::cerr << "Error: " << e.what() << " Ranger will EXIT now." << std::endl;
@@ -414,16 +416,20 @@ int main(int argc, char **argv) {
     if ( strcmp(argv[1], "predict") == 0) {
       std::deque<uint32_t> data = {};
       for (int i = 0; i < 100; i++) { data.push_back(std::stoi(argv[2])); }
-      ranger_predict(data, false);
+      std::unique_ptr<Forest> forest { };
+      ranger_init(forest, data, false);
+      ranger_predict(forest, data, true);
       return 0;
     }
     if ( strcmp(argv[1], "benchmark") == 0) {
       std::deque<uint32_t> data = {};
       for (int i = 0; i < 100; i++) { data.push_back(std::stoi(argv[2])); }
+      std::unique_ptr<Forest> forest { };
+      ranger_init(forest, data, false);
       auto mseconds = std::chrono::high_resolution_clock::now();
       int pps = 0; // prediction per second
       while (true) {
-        ranger_predict(data, false);
+        ranger_predict(forest, data, false);
         pps++;
         auto now = std::chrono::high_resolution_clock::now();
         if (std::chrono::duration_cast<std::chrono::milliseconds>(now - mseconds) > std::chrono::milliseconds(5000)) {
