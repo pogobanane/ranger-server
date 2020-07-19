@@ -73,6 +73,10 @@ void run_ranger(const ArgumentHandler& arg_handler, std::ostream& verbose_out) {
   verbose_out << "Finished Ranger." << std::endl;
 }
 
+int ranger_init(std::deque<uint32_t> data, bool verbose) {
+  return true;
+}
+
 int ranger_predict(std::deque<uint32_t> data, bool verbose) {
   // predict a .forest trained by the following:
   // ./ranger ranger --treetype=3 --file=data2.dat --write --outprefix=data2 --depvarname="result"
@@ -410,9 +414,29 @@ int main(int argc, char **argv) {
     if ( strcmp(argv[1], "predict") == 0) {
       std::deque<uint32_t> data = {};
       for (int i = 0; i < 100; i++) { data.push_back(std::stoi(argv[2])); }
-      ranger_predict(data, true);
+      ranger_predict(data, false);
       return 0;
     }
+    if ( strcmp(argv[1], "benchmark") == 0) {
+      std::deque<uint32_t> data = {};
+      for (int i = 0; i < 100; i++) { data.push_back(std::stoi(argv[2])); }
+      auto mseconds = std::chrono::high_resolution_clock::now();
+      int pps = 0; // prediction per second
+      while (true) {
+        ranger_predict(data, false);
+        pps++;
+        auto now = std::chrono::high_resolution_clock::now();
+        if (std::chrono::duration_cast<std::chrono::milliseconds>(now - mseconds) > std::chrono::milliseconds(5000)) {
+          std::cout << pps << " predictions per second" << std::endl;
+          mseconds = now;
+          pps = 0;
+          break;
+        }
+      }
+
+      return 0;
+    }
+
   }
   std::cout << "Invalid arguments. Showing valid arguments:\n";
   std::cout << "\n";
@@ -424,6 +448,7 @@ int main(int argc, char **argv) {
   std::cout << "                                             send response\n";
   std::cout << "ranger [args...]                             run original ranger with args...\n";
   std::cout << "predict <n>                                  manual prediction of {n,n,...n}\n";
+  std::cout << "benchmark <n>                                manual prediction of {n,n,...n}\n";
 
   return 1;
 }
