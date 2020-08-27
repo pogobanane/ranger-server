@@ -151,7 +151,6 @@ public:
     return data->getSnpOrder();
   }
 
-  void setData(std::unique_ptr<Data> data);
 protected:
   void grow();
   virtual void growInternal() = 0;

@@ -38,10 +38,6 @@ Forest::Forest() :
     NAN), importance_mode(DEFAULT_IMPORTANCE_MODE), progress(0) {
 }
 
-void Forest::setData(std::unique_ptr<Data>) {
-  this->data = std::move(data);
-}
-
 std::unique_ptr<Data> load_data(std::deque<uint32_t> data, const MemoryMode memory_mode) {
   std::unique_ptr<Data> result { };
   switch (memory_mode) {

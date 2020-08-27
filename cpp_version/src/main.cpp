@@ -27,7 +27,6 @@ Please note that the C++ core of ranger is distributed under MIT license and the
 #include "ForestProbability.h"
 #include "utility.h"
 
-#include "DataDouble.h"
 #include "ipc.h"
 
 using namespace ranger;
@@ -147,12 +146,6 @@ void ranger_init(std::unique_ptr<Forest> & forest, std::deque<uint32_t> data, bo
 int ranger_predict(std::unique_ptr<Forest> & forest, std::deque<uint32_t> data, bool verbose) {
   bool skipoob = false;
   std::ostream& verbose_out = std::cout;
-
-  std::unique_ptr<Data> result { };
-  //result = load_data(data, MEM_DOUBLE);
-  result = make_unique<DataDouble>();
-  result->load(data);
-  forest->setData(result);
 
   forest->run(verbose, !skipoob);
   //if (write) {
